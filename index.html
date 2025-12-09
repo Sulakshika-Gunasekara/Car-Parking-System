@@ -22,6 +22,18 @@
 
     <div id="app-container" class="bg-gray-50 w-full h-full sm:h-[85vh] sm:w-[400px] sm:rounded-3xl shadow-2xl relative overflow-hidden flex flex-col font-sans">
 
+        <div id="screen-landing" class="absolute inset-0 z-50 bg-blue-600 flex flex-col items-center justify-center fade-in text-white p-8 text-center">
+            <div class="bg-white/20 p-8 rounded-full mb-8 backdrop-blur-md animate-bounce">
+                <i class="ph-fill ph-car text-7xl text-white"></i>
+            </div>
+            <h1 class="text-5xl font-black mb-4 tracking-tight">ParkEasy</h1>
+            <p class="text-blue-100 text-xl mb-12 font-medium">Find the perfect spot,<br>in seconds.</p>
+
+            <button onclick="getStarted()" class="w-full bg-white text-blue-600 font-bold py-4 rounded-xl shadow-[0_10px_20px_rgba(0,0,0,0.2)] hover:bg-blue-50 transition active:scale-95 text-lg flex items-center justify-center gap-2">
+                Get Started <i class="ph-bold ph-arrow-right"></i>
+            </button>
+        </div>
+
         <div id="screen-map-view" class="absolute inset-0 z-40 bg-gray-50 flex flex-col fade-in">
             
             <div class="absolute top-0 left-0 w-full z-10 p-4 pt-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
@@ -132,7 +144,11 @@
                 </div>
                 
                 <h2 id="view-profile-name" class="text-2xl font-bold text-gray-800 mb-1">Guest User</h2>
-                <p class="text-gray-400 text-sm mb-8">Standard Member</p>
+                <div class="flex flex-col gap-1 mb-8">
+                     <p class="text-gray-400 text-sm">Standard Member</p>
+                     <p id="view-profile-email" class="text-gray-500 text-sm"></p>
+                     <p id="view-profile-phone" class="text-gray-500 text-sm"></p>
+                </div>
 
                 <button onclick="navigateTo('screen-edit-profile')" class="w-full bg-white border border-gray-200 p-4 rounded-xl flex items-center justify-between hover:bg-gray-50 transition shadow-sm">
                     <span class="font-bold text-gray-700">Edit Personal Details</span>
@@ -150,6 +166,12 @@
             <main class="p-6">
                 <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Full Name</label>
                 <input id="edit-name-input" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-lg font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none mb-6">
+
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Email Address</label>
+                <input id="edit-email-input" type="email" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-lg font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none mb-6">
+
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Phone Number</label>
+                <input id="edit-phone-input" type="tel" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-lg font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none mb-6">
             </main>
         </div>
 
@@ -197,7 +219,7 @@
         let currentArrivalTime = 0; 
         
         let allParkingData = JSON.parse(localStorage.getItem('parkingDataMultiLot')) || {};
-        let userProfile = JSON.parse(localStorage.getItem('userProfile')) || { name: 'Guest User' };
+        let userProfile = JSON.parse(localStorage.getItem('userProfile')) || { name: 'Guest User', email: '', phone: '' };
         let currentSlotLabel = null;
 
         // --- GOOGLE MAPS INIT ---
@@ -459,15 +481,38 @@
         }
 
         // --- NAVIGATION & UTILS ---
+        function getStarted() {
+            document.getElementById('screen-landing').classList.add('hidden');
+        }
+
         function navigateTo(screenId) {
-            document.querySelectorAll('[id^="screen-"]').forEach(s => s.classList.add('hidden'));
+            // We don't want to hide screen-landing if it's there (though getStarted hides it).
+            // But standard navigation should work as before.
+            const screens = document.querySelectorAll('[id^="screen-"]');
+            screens.forEach(s => {
+                if(s.id !== 'screen-landing') s.classList.add('hidden');
+            });
+
             document.getElementById(screenId).classList.remove('hidden');
+
             if(screenId === 'screen-profile') {
-                document.getElementById('view-profile-name').innerText = userProfile.name;
+                updateProfileView();
             }
             if(screenId === 'screen-edit-profile') {
-                document.getElementById('edit-name-input').value = userProfile.name;
+                populateEditProfile();
             }
+        }
+
+        function updateProfileView() {
+            document.getElementById('view-profile-name').innerText = userProfile.name;
+            document.getElementById('view-profile-email').innerText = userProfile.email || '';
+            document.getElementById('view-profile-phone').innerText = userProfile.phone || '';
+        }
+
+        function populateEditProfile() {
+            document.getElementById('edit-name-input').value = userProfile.name;
+            document.getElementById('edit-email-input').value = userProfile.email || '';
+            document.getElementById('edit-phone-input').value = userProfile.phone || '';
         }
         function backToMap() { 
             navigateTo('screen-map-view'); 
@@ -476,6 +521,8 @@
         }
         function saveProfile() {
             userProfile.name = document.getElementById('edit-name-input').value;
+            userProfile.email = document.getElementById('edit-email-input').value;
+            userProfile.phone = document.getElementById('edit-phone-input').value;
             localStorage.setItem('userProfile', JSON.stringify(userProfile));
             navigateTo('screen-profile');
         }
@@ -483,7 +530,7 @@
         document.getElementById("modal").onclick = (e) => { if (e.target === document.getElementById("modal")) closeModal(); };
 
         // Init Profile
-        document.getElementById('view-profile-name').innerText = userProfile.name;
+        updateProfileView();
 
     </script>
 </body>
