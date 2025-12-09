@@ -1,520 +1,490 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ParkEasy Pro</title>
+    <title>ParkEasy Map Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-      .fade-in {
-        animation: fadeIn 0.3s ease-in-out;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-
-      .input-disabled {
-        background-color: transparent;
-        border-color: transparent;
-        color: #4b5563;
-      }
-      .input-enabled {
-        background-color: #f9fafb;
-        border-color: #e5e7eb;
-        color: #1f2937;
-      }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Map Container */
+        #google-map { width: 100%; height: 100%; border-radius: 0 0 1.5rem 1.5rem; }
     </style>
-  </head>
-  <body
-    class="bg-gray-800 h-screen w-screen flex items-center justify-center overflow-hidden">
-    <div
-      id="app-container"
-      class="bg-gray-50 w-full h-full sm:h-[85vh] sm:w-[400px] sm:rounded-3xl shadow-2xl relative overflow-hidden flex flex-col font-sans">
-      <div
-        id="screen-landing"
-        class="absolute inset-0 z-40 bg-blue-600 text-white flex flex-col items-center justify-center p-8 text-center fade-in">
-        <div class="bg-white/20 p-6 rounded-3xl mb-6 backdrop-blur-sm">
-          <i class="ph-fill ph-car-profile text-6xl text-white"></i>
-        </div>
-        <h1 class="text-4xl font-bold mb-2">ParkEasy</h1>
-        <p class="text-blue-100 text-lg mb-12">Book your slot for today.</p>
-        <button
-          onclick="enterApp()"
-          class="w-full bg-white text-blue-600 font-bold py-4 rounded-xl text-lg shadow-lg hover:bg-blue-50 transition active:scale-95">
-          Book Now
-        </button>
-      </div>
+</head>
+<body class="bg-gray-800 h-screen w-screen flex items-center justify-center overflow-hidden">
 
-      <div
-        id="screen-main"
-        class="hidden h-full flex flex-col relative z-10 fade-in">
-        <header
-          class="bg-white p-5 pt-8 pb-4 shadow-sm border-b border-gray-100">
-          <h1 id="header-title" class="text-2xl font-bold text-gray-800">
-            Select Time
-          </h1>
-          <p id="header-subtitle" class="text-gray-400 text-xs">
-            Available slots for today
-          </p>
-        </header>
+    <div id="app-container" class="bg-gray-50 w-full h-full sm:h-[85vh] sm:w-[400px] sm:rounded-3xl shadow-2xl relative overflow-hidden flex flex-col font-sans">
 
-        <main class="flex-1 overflow-y-auto p-4 pb-24 no-scrollbar">
-          <div id="tab-slots" class="space-y-3"></div>
-
-          <div id="tab-profile" class="hidden">
-            <div
-              class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center relative">
-              <button
-                onclick="toggleEditProfile()"
-                class="absolute top-4 right-4 p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition">
-                <i id="edit-icon" class="ph-bold ph-pencil-simple text-xl"></i>
-              </button>
-              <div
-                class="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center text-blue-600">
-                <i class="ph-fill ph-user text-4xl"></i>
-              </div>
-              <div class="space-y-4">
-                <div>
-                  <label class="text-xs text-gray-400 uppercase font-bold"
-                    >Full Name</label
-                  >
-                  <input
-                    id="profile-name"
-                    type="text"
-                    disabled
-                    class="input-disabled w-full text-center font-bold text-lg p-2 rounded-lg border-2 focus:outline-none focus:border-blue-500 transition-all"
-                    value="Guest User" />
+        <div id="screen-map-view" class="absolute inset-0 z-40 bg-gray-50 flex flex-col fade-in">
+            
+            <div class="absolute top-0 left-0 w-full z-10 p-4 pt-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+                <div class="flex justify-between items-center mb-3 px-1 pointer-events-auto">
+                    <h1 class="text-white font-bold text-lg shadow-black drop-shadow-md">Where to?</h1>
+                    <button onclick="navigateTo('screen-profile')" class="bg-white/20 backdrop-blur-md p-2 rounded-full hover:bg-white/40 transition">
+                        <i class="ph-fill ph-user text-white"></i>
+                    </button>
                 </div>
-                <div>
-                  <label class="text-xs text-gray-400 uppercase font-bold"
-                    >License Plate</label
-                  >
-                  <input
-                    id="profile-plate"
-                    type="text"
-                    disabled
-                    class="input-disabled w-full text-center font-bold text-xl p-2 rounded-lg border-2 focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
-                    value="" />
+                <div class="relative shadow-lg rounded-2xl pointer-events-auto">
+                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-4 text-gray-400 z-10"></i>
+                    <input type="text" id="map-search-input" placeholder="Search destination (e.g. Colombo)..." 
+                        class="w-full bg-white text-gray-800 pl-12 pr-4 py-3.5 rounded-2xl font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition shadow-sm" />
                 </div>
-              </div>
-              <p
-                id="save-msg"
-                class="text-xs text-green-500 mt-2 font-bold opacity-0 transition">
-                Profile Saved!
-              </p>
             </div>
-          </div>
-        </main>
 
-        <nav
-          class="bg-white border-t border-gray-200 p-2 flex justify-around items-center absolute bottom-0 w-full shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-20">
-          <button
-            onclick="switchTab('slots')"
-            id="nav-slots"
-            class="flex flex-col items-center w-full py-2 rounded-xl text-blue-600 bg-blue-50 transition">
-            <i class="ph-fill ph-clock text-2xl mb-1"></i>
-            <span class="text-[10px] font-bold">Time Slots</span>
-          </button>
-          <button
-            onclick="switchTab('profile')"
-            id="nav-profile"
-            class="flex flex-col items-center w-full py-2 rounded-xl text-gray-400 hover:bg-gray-50 transition">
-            <i class="ph ph-user text-2xl mb-1"></i>
-            <span class="text-[10px] font-bold">Profile</span>
-          </button>
-        </nav>
-      </div>
-
-      <div
-        id="screen-grid"
-        class="hidden absolute inset-0 z-30 bg-gray-50 flex flex-col fade-in">
-        <header
-          class="bg-blue-600 text-white p-5 pt-6 pb-6 rounded-b-3xl shadow-lg shrink-0">
-          <div class="flex items-center gap-3 mb-4">
-            <button
-              onclick="backToMain()"
-              class="bg-blue-700 p-2 rounded-full hover:bg-blue-800 transition">
-              <i class="ph-bold ph-arrow-left text-white"></i>
-            </button>
-            <div>
-              <h1 class="text-xl font-bold">Select Spot</h1>
-              <p
-                id="grid-time-display"
-                class="text-blue-100 text-xs font-bold uppercase tracking-wider">
-                --:--
-              </p>
+            <div class="flex-1 relative bg-blue-50">
+                <div id="map-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-100 z-0">
+                    <i class="ph-duotone ph-spinner animate-spin text-4xl mb-2"></i>
+                    <p class="text-xs">Loading Google Maps...</p>
+                </div>
+                <div id="google-map" class="z-0"></div>
             </div>
-          </div>
-          <div class="relative">
-            <i
-              class="ph ph-magnifying-glass absolute left-3 top-3.5 text-gray-400 text-lg"></i>
-            <input
-              type="text"
-              id="search-input"
-              onkeyup="renderGrid()"
-              placeholder="Search license plate..."
-              class="w-full pl-10 pr-4 py-3 rounded-xl text-gray-800 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/30 shadow-sm transition-all" />
-          </div>
-        </header>
 
-        <main class="flex-1 overflow-y-auto p-4 pb-10 no-scrollbar">
-          <div class="flex gap-3 mb-6">
-            <div
-              class="flex-1 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-              <div>
-                <p class="text-gray-400 text-[10px] font-bold uppercase">
-                  Free
-                </p>
-                <p id="count-free" class="text-2xl font-bold text-green-600">
-                  0
-                </p>
-              </div>
-              <div class="bg-green-100 p-2 rounded-lg text-green-600">
-                <i class="ph-fill ph-check-circle"></i>
-              </div>
-            </div>
-            <div
-              class="flex-1 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-              <div>
-                <p class="text-gray-400 text-[10px] font-bold uppercase">
-                  Busy
-                </p>
-                <p id="count-busy" class="text-2xl font-bold text-red-500">0</p>
-              </div>
-              <div class="bg-red-100 p-2 rounded-lg text-red-500">
-                <i class="ph-fill ph-car"></i>
-              </div>
-            </div>
-          </div>
-          <div id="parking-grid" class="grid grid-cols-3 gap-3"></div>
-        </main>
-      </div>
+            <div id="parking-sheet" class="absolute bottom-0 w-full bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] p-6 translate-y-full transition-transform duration-300 z-20">
+                <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 id="sheet-title" class="text-xl font-bold text-gray-800">Zone A - Mall</h2>
+                        <p id="sheet-distance" class="text-sm text-gray-500">Calculating...</p>
+                    </div>
+                    <div class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">OPEN</div>
+                </div>
 
-      <div
-        id="modal"
-        class="hidden absolute inset-0 bg-gray-900/60 z-50 flex items-end justify-center fade-in backdrop-blur-sm">
-        <div class="bg-white w-full rounded-t-3xl p-6 shadow-2xl relative">
-          <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
-          <div class="flex justify-between items-center mb-6">
-            <h3 id="modal-title" class="text-xl font-bold text-gray-800">
-              Booking
-            </h3>
-            <button
-              onclick="closeModal()"
-              class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
-              <i class="ph-bold ph-x text-gray-600"></i>
-            </button>
-          </div>
-          <div id="modal-content"></div>
+                <div class="flex gap-4 mb-6">
+                    <div class="flex-1 bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Rate</p>
+                        <p id="sheet-rate" class="text-gray-800 font-bold">$2.00/hr</p>
+                    </div>
+                    <div class="flex-1 bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Type</p>
+                        <p id="sheet-type" class="text-gray-800 font-bold">Covered</p>
+                    </div>
+                </div>
+
+                <button onclick="selectParkingLot()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition active:scale-95">
+                    Check Availability
+                </button>
+            </div>
         </div>
-      </div>
+
+        <div id="screen-slots" class="hidden absolute inset-0 z-30 bg-gray-50 flex flex-col fade-in">
+            <header class="bg-white p-5 pt-8 pb-4 shadow-sm border-b border-gray-100 flex items-center gap-3">
+                <button onclick="backToMap()" class="text-gray-400 hover:text-gray-800"><i class="ph-bold ph-arrow-left text-xl"></i></button>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800">Select Time</h1>
+                    <p id="lot-name-display" class="text-gray-400 text-xs">Checking Zone A...</p>
+                </div>
+            </header>
+            <div id="slots-eta-banner" class="bg-blue-50 px-5 py-3 text-xs text-blue-800 flex items-center gap-2">
+                <i class="ph-fill ph-traffic-signal"></i>
+                <span id="eta-text">Calculating arrival time...</span>
+            </div>
+
+            <main class="flex-1 overflow-y-auto p-4 no-scrollbar">
+                <div id="slots-list" class="space-y-3"></div>
+            </main>
+        </div>
+
+        <div id="screen-grid" class="hidden absolute inset-0 z-30 bg-gray-50 flex flex-col fade-in">
+            <header class="bg-blue-600 text-white p-5 pt-6 pb-6 rounded-b-3xl shadow-lg shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="navigateTo('screen-slots')" class="bg-blue-700 p-2 rounded-full hover:bg-blue-800 transition">
+                        <i class="ph-bold ph-arrow-left text-white"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-xl font-bold">Select Spot</h1>
+                        <p id="grid-time-display" class="text-blue-100 text-xs font-bold uppercase tracking-wider">--:--</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-4 pb-10 no-scrollbar">
+                <div class="flex gap-3 mb-6">
+                    <div class="flex-1 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div><p class="text-gray-400 text-[10px] font-bold uppercase">Free</p><p id="count-free" class="text-2xl font-bold text-green-600">0</p></div>
+                        <div class="bg-green-100 p-2 rounded-lg text-green-600"><i class="ph-fill ph-check-circle"></i></div>
+                    </div>
+                    <div class="flex-1 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div><p class="text-gray-400 text-[10px] font-bold uppercase">Busy</p><p id="count-busy" class="text-2xl font-bold text-red-500">0</p></div>
+                        <div class="bg-red-100 p-2 rounded-lg text-red-500"><i class="ph-fill ph-car"></i></div>
+                    </div>
+                </div>
+                <div id="parking-grid" class="grid grid-cols-3 gap-3"></div>
+            </main>
+        </div>
+
+        <div id="screen-profile" class="hidden absolute inset-0 z-40 bg-gray-50 flex flex-col fade-in">
+            <header class="bg-white p-5 pt-8 pb-4 shadow-sm border-b border-gray-100 flex items-center gap-3">
+                <button onclick="backToMap()" class="text-gray-400 hover:text-gray-800"><i class="ph-bold ph-arrow-left text-xl"></i></button>
+                <h1 class="text-xl font-bold text-gray-800">My Profile</h1>
+            </header>
+
+            <main class="flex-1 p-6 text-center">
+                <div class="w-24 h-24 bg-blue-100 rounded-full mx-auto mb-6 flex items-center justify-center text-blue-600 shadow-inner">
+                    <i class="ph-fill ph-user text-5xl"></i>
+                </div>
+                
+                <h2 id="view-profile-name" class="text-2xl font-bold text-gray-800 mb-1">Guest User</h2>
+                <p class="text-gray-400 text-sm mb-8">Standard Member</p>
+
+                <button onclick="navigateTo('screen-edit-profile')" class="w-full bg-white border border-gray-200 p-4 rounded-xl flex items-center justify-between hover:bg-gray-50 transition shadow-sm">
+                    <span class="font-bold text-gray-700">Edit Personal Details</span>
+                    <i class="ph-bold ph-pencil-simple text-blue-600"></i>
+                </button>
+            </main>
+        </div>
+
+        <div id="screen-edit-profile" class="hidden absolute inset-0 z-50 bg-white flex flex-col slide-up">
+            <header class="p-5 pt-8 flex items-center justify-between border-b border-gray-100">
+                <button onclick="navigateTo('screen-profile')" class="text-gray-500 font-bold text-sm">Cancel</button>
+                <h1 class="text-lg font-bold text-gray-800">Edit Profile</h1>
+                <button onclick="saveProfile()" class="text-blue-600 font-bold text-sm">Save</button>
+            </header>
+            <main class="p-6">
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Full Name</label>
+                <input id="edit-name-input" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-lg font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none mb-6">
+            </main>
+        </div>
+
+        <div id="modal" class="hidden absolute inset-0 bg-gray-900/60 z-50 flex items-end justify-center fade-in backdrop-blur-sm">
+            <div class="bg-white w-full rounded-t-3xl p-6 shadow-2xl relative">
+                <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-title" class="text-xl font-bold text-gray-800">Booking</h3>
+                    <button onclick="closeModal()" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition"><i class="ph-bold ph-x text-gray-600"></i></button>
+                </div>
+                <div id="modal-content"></div>
+            </div>
+        </div>
     </div>
 
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqIJAO1gzb2K8meZ3-rLo_jQJQTzz9oCQ&libraries=places,geometry&callback=initMap" async defer></script>
+
     <script>
-      // --- CONFIG ---
-      const TOTAL_SPOTS = 15;
-      const TIME_SLOTS = [
-        "1:30 PM - 1:40 PM",
-        "1:40 PM - 1:50 PM",
-        "1:50 PM - 2:00 PM",
-        "2:00 PM - 2:10 PM",
-        "2:10 PM - 2:20 PM",
-        "2:20 PM - 2:30 PM",
-      ];
+        // --- MOCK PARKING DATA ---
+        // Simulating parking lots around a generic location (e.g. Colombo)
+        // If you are in a different city, search for "Colombo" in the map to see markers.
+        const PARKING_LOTS = [
+            { id: 1, name: "City Mall Zone A", lat: 6.9271, lng: 79.8612, rate: "$2.00/hr", type: "Covered" },
+            { id: 2, name: "Station Road Lot", lat: 6.9333, lng: 79.8500, rate: "$1.50/hr", type: "Open" },
+            { id: 3, name: "Hospital Square", lat: 6.9150, lng: 79.8650, rate: "$2.50/hr", type: "Medical" },
+            { id: 4, name: "Beachside Park", lat: 6.9200, lng: 79.8450, rate: "$3.00/hr", type: "Open" }
+        ];
 
-      let allParkingData =
-        JSON.parse(localStorage.getItem("parkingDataBySlot")) || {};
-      let userProfile = JSON.parse(localStorage.getItem("userProfile")) || {
-        name: "Guest User",
-        plate: "",
-      };
-      let currentSlot = null;
-      let isEditing = false;
+        // --- TIME SLOTS ---
+        const TIME_SLOTS = [
+            { label: "1:30 PM - 1:40 PM", val: 1330 }, 
+            { label: "1:40 PM - 1:50 PM", val: 1340 },
+            { label: "1:50 PM - 2:00 PM", val: 1350 },
+            { label: "2:00 PM - 2:10 PM", val: 1400 },
+            { label: "2:10 PM - 2:20 PM", val: 1410 },
+            { label: "2:20 PM - 2:30 PM", val: 1420 },
+            { label: "2:30 PM - 2:40 PM", val: 1430 }
+        ];
 
-      function enterApp() {
-        document.getElementById("screen-landing").classList.add("hidden");
-        document.getElementById("screen-main").classList.remove("hidden");
-        renderTimeSlots();
-      }
+        // --- STATE ---
+        let map;
+        let userMarker;
+        let parkingMarkers = [];
+        let selectedLot = null;
+        let currentArrivalTime = 0; 
+        
+        let allParkingData = JSON.parse(localStorage.getItem('parkingDataMultiLot')) || {};
+        let userProfile = JSON.parse(localStorage.getItem('userProfile')) || { name: 'Guest User' };
+        let currentSlotLabel = null;
 
-      function switchTab(tab) {
-        const slotsTab = document.getElementById("tab-slots");
-        const profileTab = document.getElementById("tab-profile");
-        const slotsNav = document.getElementById("nav-slots");
-        const profileNav = document.getElementById("nav-profile");
+        // --- GOOGLE MAPS INIT ---
+        window.initMap = function() {
+            // Default center: Colombo, Sri Lanka (Matching your key region likely)
+            // You can change this lat/lng to anywhere in the world.
+            const defaultLocation = { lat: 6.9271, lng: 79.8612 };
+            
+            // Hide placeholder
+            document.getElementById('map-placeholder').style.display = 'none';
 
-        if (tab === "slots") {
-          slotsTab.classList.remove("hidden");
-          profileTab.classList.add("hidden");
-          slotsNav.classList.add("text-blue-600", "bg-blue-50");
-          slotsNav.classList.remove("text-gray-400");
-          profileNav.classList.remove("text-blue-600", "bg-blue-50");
-          profileNav.classList.add("text-gray-400");
-          document.getElementById("header-title").innerText = "Select Time";
-          document.getElementById("header-subtitle").innerText =
-            "Available slots for today";
-        } else {
-          slotsTab.classList.add("hidden");
-          profileTab.classList.remove("hidden");
-          profileNav.classList.add("text-blue-600", "bg-blue-50");
-          profileNav.classList.remove("text-gray-400");
-          slotsNav.classList.remove("text-blue-600", "bg-blue-50");
-          slotsNav.classList.add("text-gray-400");
-          document.getElementById("header-title").innerText = "Profile";
-          document.getElementById("header-subtitle").innerText =
-            "Manage your details";
-          loadProfile();
-        }
-      }
+            // Create Map
+            map = new google.maps.Map(document.getElementById("google-map"), {
+                zoom: 13,
+                center: defaultLocation,
+                disableDefaultUI: true, // Clean look
+                styles: [
+                    { "featureType": "poi", "stylers": [{ "visibility": "off" }] } // Hide generic business icons
+                ]
+            });
 
-      function openGrid(timeSlot) {
-        currentSlot = timeSlot;
-        document.getElementById("screen-main").classList.add("hidden");
-        document.getElementById("screen-grid").classList.remove("hidden");
-        document.getElementById("grid-time-display").innerText = timeSlot;
-        document.getElementById("search-input").value = "";
-        renderGrid();
-      }
+            // Init Search Box
+            const input = document.getElementById("map-search-input");
+            const searchBox = new google.maps.places.SearchBox(input);
 
-      function backToMain() {
-        document.getElementById("screen-grid").classList.add("hidden");
-        document.getElementById("screen-main").classList.remove("hidden");
-        renderTimeSlots();
-      }
+            // Bias SearchBox results towards current map viewport
+            map.addListener("bounds_changed", () => {
+                searchBox.setBounds(map.getBounds());
+            });
 
-      function renderTimeSlots() {
-        const container = document.getElementById("tab-slots");
-        container.innerHTML = "";
+            // Listen for user selecting a place
+            searchBox.addListener("places_changed", () => {
+                const places = searchBox.getPlaces();
+                if (places.length == 0) return;
 
-        TIME_SLOTS.forEach((time) => {
-          if (!allParkingData[time])
-            allParkingData[time] = Array(TOTAL_SPOTS).fill(null);
+                const place = places[0];
+                if (!place.geometry || !place.geometry.location) return;
 
-          const occupied = allParkingData[time].filter(
-            (x) => x !== null
-          ).length;
-          const isFull = occupied >= TOTAL_SPOTS;
+                // Move map
+                map.setCenter(place.geometry.location);
+                map.setZoom(15);
 
-          const btn = document.createElement("button");
-          btn.onclick = () => openGrid(time);
-          btn.className = `w-full text-left p-4 rounded-xl border flex justify-between items-center transition active:scale-95 shadow-sm ${
-            isFull
-              ? "bg-gray-100 border-gray-200 opacity-60"
-              : "bg-white border-blue-100 hover:border-blue-400"
-          }`;
-          btn.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="bg-blue-50 text-blue-600 p-2 rounded-lg"><i class="ph-bold ph-clock"></i></div>
-                        <span class="font-bold text-gray-700">${time}</span>
-                    </div>
-                    <div class="text-xs font-bold ${
-                      isFull ? "text-red-500" : "text-green-600"
-                    }">
-                        ${
-                          isFull
-                            ? "FULL"
-                            : TOTAL_SPOTS - occupied + " Spots Left"
-                        }
-                    </div>
-                `;
-          container.appendChild(btn);
-        });
-      }
-
-      function renderGrid() {
-        const gridEl = document.getElementById("parking-grid");
-        gridEl.innerHTML = "";
-        const currentData = allParkingData[currentSlot];
-        const searchVal = document
-          .getElementById("search-input")
-          .value.trim()
-          .toLowerCase();
-        let occupiedCount = 0;
-
-        currentData.forEach((slot, index) => {
-          const isOccupied = slot !== null;
-          if (isOccupied) occupiedCount++;
-
-          let isDimmed = false;
-          if (searchVal && isOccupied) {
-            if (!slot.plate.toLowerCase().includes(searchVal)) isDimmed = true;
-          } else if (searchVal && !isOccupied) {
-            isDimmed = true;
-          }
-
-          const btn = document.createElement("button");
-          btn.className = `
-                    h-24 rounded-2xl flex flex-col items-center justify-center border transition-all duration-200 active:scale-95 shadow-sm
-                    ${isDimmed ? "opacity-20 scale-95" : "opacity-100"}
-                    ${
-                      isOccupied
-                        ? "bg-red-50 border-red-100 text-red-600"
-                        : "bg-white border-gray-200 text-gray-400 hover:border-blue-300 hover:text-blue-500"
+                // Set Destination Marker
+                if(userMarker) userMarker.setMap(null);
+                userMarker = new google.maps.Marker({
+                    map,
+                    position: place.geometry.location,
+                    title: "Destination",
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: "#3B82F6",
+                        fillOpacity: 1,
+                        strokeColor: "white",
+                        strokeWeight: 2,
                     }
+                });
+
+                // In a real app, you would fetch parking lots near `place.geometry.location` from your DB.
+                // Here we just re-center our mock data so they are visible near where you searched.
+                repositionMockLots(place.geometry.location);
+            });
+
+            // Show initial lots
+            showParkingMarkers();
+        }
+
+        // Helper to move mock lots near the user's search so the demo works anywhere
+        function repositionMockLots(center) {
+            const offsets = [
+                { lat: 0.002, lng: 0.002 }, { lat: -0.002, lng: -0.002 },
+                { lat: 0.002, lng: -0.002 }, { lat: -0.003, lng: 0.001 }
+            ];
+            
+            PARKING_LOTS.forEach((lot, i) => {
+                lot.lat = center.lat() + (offsets[i % offsets.length].lat);
+                lot.lng = center.lng() + (offsets[i % offsets.length].lng);
+            });
+            showParkingMarkers();
+        }
+
+        function showParkingMarkers() {
+            // Clear old
+            parkingMarkers.forEach(m => m.setMap(null));
+            parkingMarkers = [];
+
+            PARKING_LOTS.forEach(lot => {
+                const marker = new google.maps.Marker({
+                    map,
+                    position: { lat: lot.lat, lng: lot.lng },
+                    label: { text: "P", color: "white", fontWeight: "bold" },
+                    icon: {
+                        path: "M0-48c-9.8 0-17.7 7.8-17.7 17.4 0 15.5 17.7 30.6 17.7 30.6s17.7-15.4 17.7-30.6c0-9.6-7.9-17.4-17.7-17.4z",
+                        fillColor: "#EF4444",
+                        fillOpacity: 1,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 2,
+                        scale: 1.4,
+                        labelOrigin: new google.maps.Point(0, -30)
+                    }
+                });
+
+                // Click Event
+                marker.addListener("click", () => {
+                    // Calculate distance from center/user
+                    const origin = userMarker ? userMarker.getPosition() : map.getCenter();
+                    const distMeters = google.maps.geometry.spherical.computeDistanceBetween(origin, marker.getPosition());
+                    
+                    const distKm = (distMeters / 1000).toFixed(1);
+                    const timeMins = Math.ceil((distMeters / 1000) * 5); // Est 5 mins per km in city
+
+                    openParkingSheet(lot, distKm, timeMins);
+                });
+
+                parkingMarkers.push(marker);
+            });
+        }
+
+        // --- UI LOGIC ---
+
+        function openParkingSheet(lot, dist, time) {
+            selectedLot = lot;
+            
+            // Calc ETA based on fixed base time (1:30 PM) for demo
+            // In real app use new Date()
+            const baseH = 13; const baseM = 30;
+            let arrH = baseH; let arrM = baseM + time;
+            if(arrM >= 60) { arrH++; arrM -= 60; }
+            currentArrivalTime = (arrH * 100) + arrM;
+
+            // UI Updates
+            document.getElementById('sheet-title').innerText = lot.name;
+            document.getElementById('sheet-distance').innerText = `${time} min drive • ${dist} km`;
+            document.getElementById('sheet-rate').innerText = lot.rate;
+            document.getElementById('sheet-type').innerText = lot.type;
+            
+            document.getElementById('parking-sheet').style.transform = "translateY(0)";
+        }
+
+        function selectParkingLot() {
+            // Hide sheet
+            document.getElementById('parking-sheet').style.transform = "translateY(100%)";
+            
+            navigateTo('screen-slots');
+            document.getElementById('lot-name-display').innerText = selectedLot.name;
+
+            // Format ETA
+            const h = Math.floor(currentArrivalTime / 100);
+            const m = currentArrivalTime % 100;
+            const mStr = m < 10 ? '0'+m : m;
+            document.getElementById('eta-text').innerText = `Estimated arrival: ${h > 12 ? h-12 : h}:${mStr} PM`;
+
+            renderTimeSlots();
+        }
+
+        function renderTimeSlots() {
+            const container = document.getElementById('slots-list');
+            container.innerHTML = '';
+
+            TIME_SLOTS.forEach(slot => {
+                const storageKey = `${selectedLot.id}_${slot.label}`;
+                if(!allParkingData[storageKey]) allParkingData[storageKey] = Array(15).fill(null);
+                
+                const occupied = allParkingData[storageKey].filter(x => x !== null).length;
+                const isFull = occupied >= 15;
+                const isTooEarly = slot.val < currentArrivalTime;
+
+                const btn = document.createElement('button');
+                
+                if (isTooEarly) {
+                    btn.className = "w-full text-left p-4 rounded-xl border border-gray-100 bg-gray-100 opacity-50 cursor-not-allowed flex justify-between items-center";
+                    btn.innerHTML = `<div class="flex items-center gap-3"><i class="ph-bold ph-clock text-gray-400"></i><span class="font-bold text-gray-400 decoration-line-through">${slot.label}</span></div><span class="text-xs font-bold text-gray-400">Too Early</span>`;
+                    btn.onclick = () => alert("You cannot reach the parking lot by this time.");
+                } else {
+                    btn.onclick = () => openGrid(slot.label);
+                    btn.className = `w-full text-left p-4 rounded-xl border flex justify-between items-center transition active:scale-95 shadow-sm ${isFull ? 'bg-red-50 border-red-200' : 'bg-white border-blue-100 hover:border-blue-400'}`;
+                    btn.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-50 text-blue-600 p-2 rounded-lg"><i class="ph-bold ph-clock"></i></div>
+                            <span class="font-bold text-gray-700">${slot.label}</span>
+                        </div>
+                        <div class="text-xs font-bold ${isFull ? 'text-red-500' : 'text-green-600'}">${isFull ? 'FULL' : (15 - occupied) + ' Spots'}</div>
+                    `;
+                }
+                container.appendChild(btn);
+            });
+        }
+
+        function openGrid(label) {
+            currentSlotLabel = label;
+            navigateTo('screen-grid');
+            document.getElementById('grid-time-display').innerText = label;
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const gridEl = document.getElementById("parking-grid");
+            gridEl.innerHTML = "";
+            const storageKey = `${selectedLot.id}_${currentSlotLabel}`;
+            const currentData = allParkingData[storageKey];
+            let occupiedCount = 0;
+
+            currentData.forEach((slot, index) => {
+                const isOccupied = slot !== null;
+                if (isOccupied) occupiedCount++;
+                const btn = document.createElement("button");
+                btn.className = `h-24 rounded-2xl flex flex-col items-center justify-center border transition-all duration-200 active:scale-95 shadow-sm ${isOccupied ? "bg-red-50 border-red-100 text-red-600" : "bg-white border-gray-200 text-gray-400 hover:border-blue-300 hover:text-blue-500"}`;
+                btn.innerHTML = `
+                    <div class="mb-1 ${isOccupied ? "bg-red-100 text-red-500" : "bg-gray-100 text-gray-400"} p-1.5 rounded-full"><i class="ph-fill ${isOccupied ? "ph-car-profile" : "ph-plus"} text-lg"></i></div>
+                    <span class="font-bold text-md leading-none mb-0.5">A-${index + 1}</span>
+                    <span class="text-[9px] font-bold uppercase tracking-wider">${isOccupied ? slot.plate : "FREE"}</span>
                 `;
-          btn.innerHTML = `
-                    <div class="mb-1 ${
-                      isOccupied
-                        ? "bg-red-100 text-red-500"
-                        : "bg-gray-100 text-gray-400"
-                    } p-1.5 rounded-full">
-                        <i class="ph-fill ${
-                          isOccupied ? "ph-car-profile" : "ph-plus"
-                        } text-lg"></i>
-                    </div>
-                    <span class="font-bold text-md leading-none mb-0.5">A-${
-                      index + 1
-                    }</span>
-                    <span class="text-[9px] font-bold uppercase tracking-wider">${
-                      isOccupied ? slot.plate : "FREE"
-                    }</span>
-                `;
-          btn.onclick = () => handleSlotClick(index);
-          gridEl.appendChild(btn);
-        });
+                btn.onclick = () => handleSlotClick(index);
+                gridEl.appendChild(btn);
+            });
+            document.getElementById('count-free').innerText = 15 - occupiedCount;
+            document.getElementById('count-busy').innerText = occupiedCount;
+            localStorage.setItem('parkingDataMultiLot', JSON.stringify(allParkingData));
+        }
 
-        document.getElementById("count-free").innerText =
-          TOTAL_SPOTS - occupiedCount;
-        document.getElementById("count-busy").innerText = occupiedCount;
-        localStorage.setItem(
-          "parkingDataBySlot",
-          JSON.stringify(allParkingData)
-        );
-      }
+        function handleSlotClick(index) {
+            const storageKey = `${selectedLot.id}_${currentSlotLabel}`;
+            const slot = allParkingData[storageKey][index];
+            const modalEl = document.getElementById("modal");
+            const content = document.getElementById("modal-content");
+            const title = document.getElementById("modal-title");
+            
+            modalEl.classList.remove("hidden");
 
-      function handleSlotClick(index) {
-        const slot = allParkingData[currentSlot][index];
-        const modalEl = document.getElementById("modal");
-        const content = document.getElementById("modal-content");
-        const title = document.getElementById("modal-title");
-
-        modalEl.classList.remove("hidden");
-
-        if (slot === null) {
-          const defaultPlate = userProfile.plate || "";
-          title.innerText = `Book Spot A-${index + 1}`;
-          content.innerHTML = `
-                    <div class="bg-blue-50 p-4 rounded-xl mb-4">
-                        <p class="text-blue-800 text-xs font-bold uppercase">Time Slot</p>
-                        <p class="text-blue-600 font-bold">${currentSlot}</p>
-                    </div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">License Plate</label>
-                    <input type="text" id="plate-input" value="${defaultPlate}" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-lg font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none mb-6 uppercase" placeholder="ABC-1234">
+            if (slot === null) {
+                title.innerText = `Book Spot A-${index + 1}`;
+                content.innerHTML = `
+                    <div class="bg-blue-50 p-4 rounded-xl mb-4"><p class="text-blue-800 text-xs font-bold uppercase">Location</p><p class="text-blue-600 font-bold">${selectedLot.name}</p></div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Vehicle Plate Number</label>
+                    <input type="text" id="plate-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-lg font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none mb-6 uppercase" placeholder="ABC-1234">
                     <button onclick="confirmAction('book', ${index})" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 transition active:scale-95">Confirm Booking</button>
                 `;
-        } else {
-          title.innerText = `Spot A-${index + 1}`;
-          content.innerHTML = `
-                    <div class="text-center mb-6">
-                        <div class="inline-block bg-gray-100 p-4 rounded-full mb-3"><i class="ph-fill ph-car text-3xl text-gray-500"></i></div>
-                        <h2 class="text-2xl font-black text-gray-800">${slot.plate}</h2>
-                        <p class="text-gray-400 text-sm">Reserved for ${currentSlot}</p>
-                    </div>
+            } else {
+                title.innerText = `Spot A-${index + 1}`;
+                content.innerHTML = `
+                    <div class="text-center mb-6"><div class="inline-block bg-gray-100 p-4 rounded-full mb-3"><i class="ph-fill ph-car text-3xl text-gray-500"></i></div><h2 class="text-2xl font-black text-gray-800">${slot.plate}</h2><p class="text-gray-400 text-sm">Reserved</p></div>
                     <button onclick="confirmAction('release', ${index})" class="w-full bg-red-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-red-600 transition active:scale-95">Remove / Exit</button>
                 `;
+            }
         }
-      }
 
-      // --- BUG FIX IS HERE ---
-      function confirmAction(action, index) {
-        if (action === "book") {
-          const plate = document
-            .getElementById("plate-input")
-            .value.trim()
-            .toUpperCase();
-          if (!plate) return alert("Enter plate number");
-
-          // FIX: Check if this car is already in this time slot
-          const currentData = allParkingData[currentSlot];
-          const alreadyParked = currentData.some(
-            (slot) => slot && slot.plate === plate
-          );
-
-          if (alreadyParked) {
-            alert(
-              "Error: This car (" +
-                plate +
-                ") is already booked in this time slot!"
-            );
-            return; // Stop function here
-          }
-
-          allParkingData[currentSlot][index] = { plate };
-        } else {
-          allParkingData[currentSlot][index] = null;
+        function confirmAction(action, index) {
+            const storageKey = `${selectedLot.id}_${currentSlotLabel}`;
+            if(action === 'book') {
+                const plate = document.getElementById("plate-input").value.trim().toUpperCase();
+                if (!plate) return alert("Enter plate number");
+                if (allParkingData[storageKey].some(s => s && s.plate === plate)) return alert("Car already booked here!");
+                allParkingData[storageKey][index] = { plate };
+            } else {
+                allParkingData[storageKey][index] = null;
+            }
+            closeModal();
+            renderGrid();
         }
-        closeModal();
-        renderGrid();
-      }
 
-      function loadProfile() {
-        document.getElementById("profile-name").value = userProfile.name;
-        document.getElementById("profile-plate").value = userProfile.plate;
-      }
-
-      function toggleEditProfile() {
-        const nameInput = document.getElementById("profile-name");
-        const plateInput = document.getElementById("profile-plate");
-        const icon = document.getElementById("edit-icon");
-        const saveMsg = document.getElementById("save-msg");
-
-        isEditing = !isEditing;
-
-        if (isEditing) {
-          nameInput.disabled = false;
-          plateInput.disabled = false;
-          nameInput.classList.replace("input-disabled", "input-enabled");
-          plateInput.classList.replace("input-disabled", "input-enabled");
-          icon.classList.replace("ph-pencil-simple", "ph-check");
-          icon.parentElement.classList.replace("bg-blue-50", "bg-green-50");
-          icon.parentElement.classList.replace(
-            "text-blue-600",
-            "text-green-600"
-          );
-          nameInput.focus();
-          saveMsg.style.opacity = "0";
-        } else {
-          userProfile.name = nameInput.value;
-          userProfile.plate = plateInput.value.toUpperCase();
-          localStorage.setItem("userProfile", JSON.stringify(userProfile));
-          nameInput.disabled = true;
-          plateInput.disabled = true;
-          nameInput.classList.replace("input-enabled", "input-disabled");
-          plateInput.classList.replace("input-enabled", "input-disabled");
-          icon.classList.replace("ph-check", "ph-pencil-simple");
-          icon.parentElement.classList.replace("bg-green-50", "bg-blue-50");
-          icon.parentElement.classList.replace(
-            "text-green-600",
-            "text-blue-600"
-          );
-          saveMsg.style.opacity = "1";
-          setTimeout(() => {
-            saveMsg.style.opacity = "0";
-          }, 2000);
+        // --- NAVIGATION & UTILS ---
+        function navigateTo(screenId) {
+            document.querySelectorAll('[id^="screen-"]').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            if(screenId === 'screen-profile') {
+                document.getElementById('view-profile-name').innerText = userProfile.name;
+            }
+            if(screenId === 'screen-edit-profile') {
+                document.getElementById('edit-name-input').value = userProfile.name;
+            }
         }
-      }
+        function backToMap() { 
+            navigateTo('screen-map-view'); 
+            // Close sheet when going back to map
+            document.getElementById('parking-sheet').style.transform = "translateY(100%)";
+        }
+        function saveProfile() {
+            userProfile.name = document.getElementById('edit-name-input').value;
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            navigateTo('screen-profile');
+        }
+        function closeModal() { document.getElementById("modal").classList.add("hidden"); }
+        document.getElementById("modal").onclick = (e) => { if (e.target === document.getElementById("modal")) closeModal(); };
 
-      function closeModal() {
-        document.getElementById("modal").classList.add("hidden");
-      }
-      document.getElementById("modal").onclick = (e) => {
-        if (e.target === document.getElementById("modal")) closeModal();
-      };
+        // Init Profile
+        document.getElementById('view-profile-name').innerText = userProfile.name;
+
     </script>
-  </body>
+</body>
 </html>
