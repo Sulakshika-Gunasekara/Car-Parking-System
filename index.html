@@ -150,9 +150,14 @@
                      <p id="view-profile-phone" class="text-gray-500 text-sm"></p>
                 </div>
 
-                <button onclick="navigateTo('screen-edit-profile')" class="w-full bg-white border border-gray-200 p-4 rounded-xl flex items-center justify-between hover:bg-gray-50 transition shadow-sm">
+                <button onclick="navigateTo('screen-edit-profile')" class="w-full bg-white border border-gray-200 p-4 rounded-xl flex items-center justify-between hover:bg-gray-50 transition shadow-sm mb-3">
                     <span class="font-bold text-gray-700">Edit Personal Details</span>
                     <i class="ph-bold ph-pencil-simple text-blue-600"></i>
+                </button>
+
+                <button onclick="downloadCSV()" class="w-full bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-center justify-between hover:bg-blue-100 transition shadow-sm">
+                    <span class="font-bold text-blue-700">Export Data as CSV</span>
+                    <i class="ph-bold ph-download-simple text-blue-600"></i>
                 </button>
             </main>
         </div>
@@ -187,6 +192,11 @@
         </div>
     </div>
 
+    <!--
+      NOTE: The API key below is a placeholder or may have quota limits/restrictions.
+      If you see "This page can't load Google Maps correctly", please replace it with your own valid Google Maps API Key.
+      You need to enable "Maps JavaScript API" and "Places API" in your Google Cloud Console.
+    -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqIJAO1gzb2K8meZ3-rLo_jQJQTzz9oCQ&libraries=places,geometry&callback=initMap" async defer></script>
 
     <script>
@@ -528,6 +538,20 @@
         }
         function closeModal() { document.getElementById("modal").classList.add("hidden"); }
         document.getElementById("modal").onclick = (e) => { if (e.target === document.getElementById("modal")) closeModal(); };
+
+        function downloadCSV() {
+            // Convert PARKING_LOTS to CSV
+            const headers = Object.keys(PARKING_LOTS[0]).join(",");
+            const rows = PARKING_LOTS.map(obj => Object.values(obj).join(","));
+            const csvContent = [headers, ...rows].join("\n");
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'parking_lots.csv');
+            a.click();
+        }
 
         // Init Profile
         updateProfileView();

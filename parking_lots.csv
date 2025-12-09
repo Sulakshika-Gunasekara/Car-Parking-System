@@ -1,0 +1,5 @@
+id,name,lat,lng,rate,type
+1,City Mall Zone A,6.9271,79.8612,$2.00/hr,Covered
+2,Station Road Lot,6.9333,79.8500,$1.50/hr,Open
+3,Hospital Square,6.9150,79.8650,$2.50/hr,Medical
+4,Beachside Park,6.9200,79.8450,$3.00/hr,Open
