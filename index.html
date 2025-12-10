@@ -274,7 +274,19 @@
               </div>
             </div>
           </div>
-          <div id="parking-grid" class="grid grid-cols-3 gap-3"></div>
+
+          <!-- Parking Lot Simulation -->
+          <div class="bg-gray-800 rounded-3xl p-6 relative overflow-hidden shadow-inner border border-gray-700">
+            <!-- Road Markings -->
+            <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-16 bg-gray-700 flex flex-col items-center justify-center gap-8 py-4 opacity-50 z-0 border-x border-dashed border-gray-500/50">
+               <div class="w-2 h-12 bg-yellow-500/30 rounded-full"></div>
+               <div class="w-2 h-12 bg-yellow-500/30 rounded-full"></div>
+               <div class="w-2 h-12 bg-yellow-500/30 rounded-full"></div>
+               <div class="w-2 h-12 bg-yellow-500/30 rounded-full"></div>
+            </div>
+
+            <div id="parking-grid" class="grid grid-cols-2 gap-x-24 gap-y-4 relative z-10"></div>
+          </div>
         </main>
       </div>
 
@@ -753,26 +765,34 @@
         currentData.forEach((slot, index) => {
           const isOccupied = slot !== null;
           if (isOccupied) occupiedCount++;
+
           const btn = document.createElement("button");
-          btn.className = `h-24 rounded-2xl flex flex-col items-center justify-center border transition-all duration-200 active:scale-95 shadow-sm ${
+
+          // Determine if slot is on left or right for styling borders
+          const isLeft = index % 2 === 0;
+
+          btn.className = `h-20 w-full relative group transition-all duration-200 active:scale-95 ${
             isOccupied
-              ? "bg-red-50 border-red-100 text-red-600 cursor-not-allowed"
-              : "bg-white border-gray-200 text-gray-400 hover:border-blue-300 hover:text-blue-500"
+              ? "cursor-not-allowed opacity-90"
+              : "hover:bg-gray-700/50 cursor-pointer"
           }`;
+
+          // Simulation of parking lines
+          const borderClass = isLeft
+            ? "border-y-2 border-l-2 border-r-0 rounded-l-lg border-white/40"
+            : "border-y-2 border-r-2 border-l-0 rounded-r-lg border-white/40";
+
+          const bgClass = isOccupied ? "bg-red-500/20" : "bg-transparent";
+
           btn.innerHTML = `
-            <div class="mb-1 ${
-              isOccupied
-                ? "bg-red-100 text-red-500"
-                : "bg-gray-100 text-gray-400"
-            } p-1.5 rounded-full"><i class="ph-fill ${
-            isOccupied ? "ph-car-profile" : "ph-plus"
-          } text-lg"></i></div>
-            <span class="font-bold text-md leading-none mb-0.5">A-${
-              index + 1
-            }</span>
-            <span class="text-[9px] font-bold uppercase tracking-wider">${
-              isOccupied ? slot.plate : "FREE"
-            }</span>
+            <div class="absolute inset-0 ${borderClass} ${bgClass}"></div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center z-10">
+                ${isOccupied
+                  ? `<i class="ph-fill ph-car-profile text-3xl text-red-400 drop-shadow-md transform ${isLeft ? 'rotate-90' : '-rotate-90'}"></i>`
+                  : `<span class="text-white/30 font-bold text-xs">A-${index + 1}</span>`
+                }
+            </div>
+            ${isOccupied ? `<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-20 whitespace-nowrap">${slot.plate}</div>` : ''}
           `;
 
           btn.onclick = () => handleSlotClick(index);
