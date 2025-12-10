@@ -366,6 +366,7 @@
 
     <script>
       // --- CONFIGURATION ---
+      // User provided API Key
       const GOOGLE_MAPS_API_KEY = "AIzaSyBjX3A4yhn81lZz6zFZqvIfn4Owz7tvyWc";
 
       // --- MOCK PARKING DATA ---
@@ -401,6 +402,38 @@
           lng: 79.845,
           rate: "$3.00/hr",
           type: "Open",
+        },
+        {
+          id: 5,
+          name: "Downtown Plaza",
+          lat: 6.925,
+          lng: 79.855,
+          rate: "$2.20/hr",
+          type: "Covered",
+        },
+        {
+          id: 6,
+          name: "Harbor View",
+          lat: 6.94,
+          lng: 79.842,
+          rate: "$1.80/hr",
+          type: "Open",
+        },
+        {
+          id: 7,
+          name: "Market Square",
+          lat: 6.935,
+          lng: 79.86,
+          rate: "$1.50/hr",
+          type: "Open",
+        },
+        {
+          id: 8,
+          name: "Central Station",
+          lat: 6.93,
+          lng: 79.87,
+          rate: "$2.50/hr",
+          type: "Covered",
         },
       ];
 
@@ -838,11 +871,56 @@
 
       // Make initMap available globally
       window.initMap = initMap;
-    </script>
+      window.PARKING_LOTS = PARKING_LOTS;
 
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBjX3A4yhn81lZz6zFZqvIfn4Owz7tvyWc&libraries=places,geometry&callback=initMap"
-      async
-      defer></script>
+      // Global Auth Failure Handler
+      window.gm_authFailure = function () {
+        console.error("Google Maps Authentication Error");
+        // Hide the broken map to remove the 'Oops' overlay
+        document.getElementById("google-map").style.display = "none";
+        document.getElementById("map-placeholder").style.display = "flex";
+        document.getElementById("map-placeholder").innerHTML =
+          '<div class="flex flex-col items-center justify-center p-4 text-center">' +
+          '<i class="ph-duotone ph-warning text-4xl mb-2 text-red-500"></i>' +
+          '<p class="text-xs text-red-500 font-bold">Map Unavailable</p>' +
+          '<p class="text-[10px] text-gray-500 mt-1">API Key Invalid or Restricted</p>' +
+          "</div>";
+
+        // Disable search bar
+        const searchInput = document.getElementById("map-search-input");
+        if (searchInput) {
+          searchInput.disabled = true;
+          searchInput.placeholder = "Search unavailable";
+          searchInput.classList.add("bg-gray-100", "cursor-not-allowed", "text-gray-400");
+        }
+      };
+
+      // Load Google Maps Script Dynamically
+      function loadGoogleMaps() {
+        // Ensure API Key is defined
+        if (typeof GOOGLE_MAPS_API_KEY === "undefined" || !GOOGLE_MAPS_API_KEY) {
+          console.error("GOOGLE_MAPS_API_KEY is not defined");
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = function () {
+          console.error("Google Maps Script Failed to Load");
+          document.getElementById("map-placeholder").innerHTML =
+            '<div class="flex flex-col items-center justify-center p-4 text-center">' +
+            '<i class="ph-duotone ph-wifi-slash text-4xl mb-2 text-red-500"></i>' +
+            '<p class="text-xs text-red-500 font-bold">Connection Error</p>' +
+            '<p class="text-[10px] text-gray-500 mt-1">Failed to load Google Maps script</p>' +
+            "</div>";
+        };
+        document.body.appendChild(script);
+      }
+
+      // Initialize
+      loadGoogleMaps();
+    </script>
   </body>
 </html>
