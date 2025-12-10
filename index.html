@@ -150,7 +150,15 @@
           class="absolute bottom-0 w-full bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] p-6 translate-y-full transition-transform duration-300 z-20">
           <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
-          <div class="flex justify-between items-start mb-4">
+          <div class="absolute top-6 right-6">
+            <button
+              onclick="closeParkingSheet()"
+              class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
+              <i class="ph-bold ph-x text-gray-600"></i>
+            </button>
+          </div>
+
+          <div class="flex justify-between items-start mb-4 pr-10">
             <div>
               <h2 id="sheet-title" class="text-xl font-bold text-gray-800">
                 Zone A - Mall
@@ -660,6 +668,11 @@
 
         document.getElementById("parking-sheet").style.transform =
           "translateY(0)";
+      }
+
+      function closeParkingSheet() {
+        document.getElementById("parking-sheet").style.transform =
+          "translateY(100%)";
       }
 
       function selectParkingLot() {
